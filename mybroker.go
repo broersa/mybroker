@@ -14,6 +14,7 @@ import (
 	"github.com/broersa/mybroker/bll"
 	"github.com/broersa/mybroker/bllimpl"
 	"github.com/broersa/mybroker/dalpsql"
+	"github.com/broersa/mybroker/models"
 	"github.com/broersa/semtech"
 	"github.com/gorilla/mux"
 
@@ -37,14 +38,6 @@ func main() {
 	s, err := sql.Open("postgres", c)
 	checkerror(err)
 	d := dalpsql.New(s)
-	/*d.BeginTransaction()
-	var i int64
-	i, err = d.AddApplication(&dal.Application{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(i)
-	d.CommitTransaction()*/
 	b = bllimpl.New(&d)
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index)
@@ -66,11 +59,21 @@ func RegisterApplication(w http.ResponseWriter, r *http.Request) {
 	name := vars["name"]
 	application, err := b.RegisterApplication(name)
 	if err != nil {
-		fmt.Println(err)
-	}
-	if err == nil {
+		log.Println(err)
+	} else {
 		if application != 0 {
-			fmt.Fprintf(w, "OK: "+string(application))
+			app, err := b.GetApplication(application)
+			if err != nil {
+				log.Println(err)
+			} else {
+				responseapplication := &models.ResponseApplication{AppName: app.Name, AppEUI: app.AppEUI}
+				str, err := json.Marshal(responseapplication)
+				if err != nil {
+					log.Println(err)
+				} else {
+					w.Write(str)
+				}
+			}
 		}
 	}
 }
@@ -92,7 +95,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	contents, err := ioutil.ReadAll(r.Body)
 	checkerror(err)
-	var message Message
+	var message models.Message
 	err = json.Unmarshal(contents, &message)
 	checkerror(err)
 	data, err := base64.StdEncoding.DecodeString(message.Package.Data)
@@ -114,7 +117,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			checkerror(err)
 			ja, err := joinaccept.Marshal(appkey)
 			checkerror(err)
-			responsemessage := &ResponseMessage{
+			responsemessage := &models.ResponseMessage{
 				OriginUDPAddrNetwork: message.OriginUDPAddrNetwork,
 				OriginUDPAddrString:  message.OriginUDPAddrString,
 				Package: semtech.TXPK{
