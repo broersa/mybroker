@@ -51,6 +51,30 @@ func (dalpsql *dalPsql) AddApplication(application *dal.Application) (int64, err
 	return r, nil
 }
 
+func (dalpsql *dalPsql) GetApplication(id int64) (*dal.Application, error) {
+	var returnvalue dal.Application
+	row := dalpsql.db.QueryRow("SELECT appkey, appname, appeui FROM applications WHERE appkey=$1", id)
+	err := row.Scan(&returnvalue.ID, &returnvalue.Name, &returnvalue.AppEUI)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, err
+	}
+	return &returnvalue, nil
+}
+func (dalpsql *dalPsql) GetApplicationOnName(appname string) (*dal.Application, error) {
+	var returnvalue dal.Application
+	row := dalpsql.db.QueryRow("SELECT appkey, appname, appeui FROM applications WHERE appname=$1", appname)
+	err := row.Scan(&returnvalue.ID, &returnvalue.Name, &returnvalue.AppEUI)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, err
+	}
+	return &returnvalue, nil
+}
 func (dalpsql *dalPsql) GetApplicationOnAppEUI(appeui string) (*dal.Application, error) {
 	var returnvalue dal.Application
 	row := dalpsql.db.QueryRow("SELECT appkey, appname, appeui FROM applications WHERE appeui=$1", appeui)

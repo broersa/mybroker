@@ -46,23 +46,9 @@ func main() {
 	fmt.Println(i)
 	d.CommitTransaction()*/
 	b = bllimpl.New(&d)
-	x, err := b.GetApplicationOnAppEUI("andre")
-	if err != nil {
-		fmt.Println(err)
-	}
-	if x != nil {
-		fmt.Println(x.Name)
-	}
-	y, err := b.GetApplicationOnAppEUI("broers")
-	if err != nil {
-		fmt.Println(err)
-	}
-	if y != nil {
-		fmt.Println(y.Name)
-	}
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index)
-	router.HandleFunc("/RegisterApplication", RegisterApplication).Methods("POST")
+	router.HandleFunc("/RegisterApplication/{name}", RegisterApplication).Methods("POST")
 	router.HandleFunc("/HasApplication/{appeui}", HasApplication).Methods("GET")
 	router.HandleFunc("/Message", MessageHandler).Methods("POST")
 	//log.Fatal(http.ListenAndServeTLS(":4443", "server.pem", "server.key", router))
@@ -76,16 +62,29 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 // RegisterApplication ...
 func RegisterApplication(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Body)
+	vars := mux.Vars(r)
+	name := vars["name"]
+	application, err := b.RegisterApplication(name)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err == nil {
+		if application != 0 {
+			fmt.Fprintf(w, "OK: "+string(application))
+		}
+	}
 }
 
 // HasApplication ...
 func HasApplication(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//appeui := vars["appeui"]
-	//_, err := b.GetApplicationOnAppEUI(appeui)
-	log.Println("OK")
-	fmt.Fprintf(w, "OK")
+	vars := mux.Vars(r)
+	appeui := vars["appeui"]
+	application, err := b.GetApplicationOnAppEUI(appeui)
+	if err == nil {
+		if application != nil {
+			fmt.Fprintf(w, "OK")
+		}
+	}
 }
 
 // MessageHandler ...
