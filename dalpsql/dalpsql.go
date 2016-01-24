@@ -3,7 +3,7 @@ package dalpsql
 import (
 	"database/sql"
 
-	"github.com/broersa/ttnbroker/dal"
+	"github.com/broersa/mybroker/dal"
 )
 
 type (
@@ -44,9 +44,22 @@ func (dalpsql *dalPsql) AddApplication(application *dal.Application) (int64, err
 		return 0, err1
 	}
 	var r int64
-	err2 := dalpsql.tx.Stmt(q).QueryRow(application.Name, application.Eui).Scan(&r)
+	err2 := dalpsql.tx.Stmt(q).QueryRow(application.Name, application.AppEUI).Scan(&r)
 	if err2 != nil {
 		return 0, err2
 	}
 	return r, nil
+}
+
+func (dalpsql *dalPsql) GetApplicationOnAppEUI(appeui string) (*dal.Application, error) {
+	var returnvalue dal.Application
+	row := dalpsql.db.QueryRow("SELECT appkey, appname, appeui FROM applications WHERE appeui=$1", appeui)
+	err := row.Scan(&returnvalue.ID, &returnvalue.Name, &returnvalue.AppEUI)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, err
+	}
+	return &returnvalue, nil
 }

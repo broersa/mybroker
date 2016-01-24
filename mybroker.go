@@ -11,10 +11,10 @@ import (
 	"os"
 
 	"github.com/broersa/lora"
+	"github.com/broersa/mybroker/bll"
+	"github.com/broersa/mybroker/bllimpl"
+	"github.com/broersa/mybroker/dalpsql"
 	"github.com/broersa/semtech"
-	"github.com/broersa/ttnbroker/bll"
-	"github.com/broersa/ttnbroker/bllimpl"
-	"github.com/broersa/ttnbroker/dalpsql"
 	"github.com/gorilla/mux"
 
 	// Database driver
@@ -45,12 +45,25 @@ func main() {
 	}
 	fmt.Println(i)
 	d.CommitTransaction()*/
-	b = bllimpl.New(d)
-	b.RegisterApplication(&bll.Application{})
+	b = bllimpl.New(&d)
+	x, err := b.GetApplicationOnAppEUI("andre")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if x != nil {
+		fmt.Println(x.Name)
+	}
+	y, err := b.GetApplicationOnAppEUI("broers")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if y != nil {
+		fmt.Println(y.Name)
+	}
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index)
 	router.HandleFunc("/RegisterApplication", RegisterApplication).Methods("POST")
-	router.HandleFunc("/HasApplication/{name}", HasApplication).Methods("GET")
+	router.HandleFunc("/HasApplication/{appeui}", HasApplication).Methods("GET")
 	router.HandleFunc("/Message", MessageHandler).Methods("POST")
 	//log.Fatal(http.ListenAndServeTLS(":4443", "server.pem", "server.key", router))
 	log.Fatal(http.ListenAndServe(":4443", router))
@@ -70,6 +83,7 @@ func RegisterApplication(w http.ResponseWriter, r *http.Request) {
 func HasApplication(w http.ResponseWriter, r *http.Request) {
 	//vars := mux.Vars(r)
 	//appeui := vars["appeui"]
+	//_, err := b.GetApplicationOnAppEUI(appeui)
 	log.Println("OK")
 	fmt.Fprintf(w, "OK")
 }

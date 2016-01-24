@@ -2,5 +2,7 @@ package bll
 
 // Application Business Entity
 type Application struct {
-	Name string
+	ID     int64
+	Name   string
+	AppEUI string
 }

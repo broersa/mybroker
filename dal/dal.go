@@ -7,6 +7,7 @@ type (
 		CommitTransaction() error
 		RollbackTransaction() error
 		AddApplication(application *Application) (int64, error)
+		GetApplicationOnAppEUI(appeui string) (*Application, error)
 		//		GetSessionOnID(id int64) (*Session, error)
 		//		GetSessionOnDevNonce(devnonce string) (*Session, error)
 	}
