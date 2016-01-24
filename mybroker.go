@@ -31,9 +31,9 @@ func checkerror(err error) {
 }
 
 func main() {
-	log.Print("TTNBroker is ALIVE")
-	c := os.Getenv("TTNBROKER_DB")
-	//s, err := sql.Open("postgres", "postgres://user:password@server/ttn?sslmode=require")
+	log.Print("MYBroker is ALIVE")
+	c := os.Getenv("MYBROKER_DB")
+	//s, err := sql.Open("postgres", "postgres://user:password@server/my?sslmode=require")
 	s, err := sql.Open("postgres", c)
 	checkerror(err)
 	d := dalpsql.New(s)
