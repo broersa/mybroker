@@ -42,6 +42,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index)
 	router.HandleFunc("/RegisterApplication/{name}", RegisterApplication).Methods("POST")
+	router.HandleFunc("/RegisterDevice/{appeui}/{deveui}", RegisterDevice).Methods("POST")
 	router.HandleFunc("/HasApplication/{appeui}", HasApplication).Methods("GET")
 	router.HandleFunc("/Message", MessageHandler).Methods("POST")
 	//log.Fatal(http.ListenAndServeTLS(":4443", "server.pem", "server.key", router))
@@ -68,6 +69,32 @@ func RegisterApplication(w http.ResponseWriter, r *http.Request) {
 			} else {
 				responseapplication := &models.ResponseApplication{AppName: app.Name, AppEUI: app.AppEUI}
 				str, err := json.Marshal(responseapplication)
+				if err != nil {
+					log.Println(err)
+				} else {
+					w.Write(str)
+				}
+			}
+		}
+	}
+}
+
+// RegisterDevice ...
+func RegisterDevice(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	appeui := vars["appeui"]
+	deveui := vars["deveui"]
+	device, err := b.RegisterDevice(appeui, deveui)
+	if err != nil {
+		log.Println(err)
+	} else {
+		if device != 0 {
+			dev, err := b.GetDevice(device)
+			if err != nil {
+				log.Println(err)
+			} else {
+				responsedevice := &models.ResponseDevice{AppKey: dev.AppKey}
+				str, err := json.Marshal(responsedevice)
 				if err != nil {
 					log.Println(err)
 				} else {

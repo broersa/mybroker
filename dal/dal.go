@@ -10,6 +10,9 @@ type (
 		GetApplication(id int64) (*Application, error)
 		GetApplicationOnName(appname string) (*Application, error)
 		GetApplicationOnAppEUI(appeui string) (*Application, error)
+		AddDevice(device *Device) (int64, error)
+		GetDevice(id int64) (*Device, error)
+		GetDeviceOnDevEUI(deveui string) (*Device, error)
 		//		GetSessionOnID(id int64) (*Session, error)
 		//		GetSessionOnDevNonce(devnonce string) (*Session, error)
 	}

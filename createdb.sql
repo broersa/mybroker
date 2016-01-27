@@ -7,8 +7,8 @@ create table applications (
 create table devices (
   devkey bigserial primary key,
   devapp bigint references applications (appkey),
-  devappkey varchar(32) unique not null,
-  deveui varchar(16) unique not null
+  deveui varchar(16) unique not null,
+  devappkey varchar(32) unique not null
 );
 
 create table sessions (
