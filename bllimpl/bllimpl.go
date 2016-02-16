@@ -115,6 +115,17 @@ func (bllimpl *bllImpl) GetDevice(id int64) (*bll.Device, error) {
 	return &bll.Device{ID: d.ID, Application: d.Application, DevEUI: d.DevEUI, AppKey: d.AppKey}, nil
 }
 
+func (bllimpl *bllImpl) GetDeviceOnAppEUIDevEUI(appeui string, deveui string) (*bll.Device, error) {
+	d, err := (*bllimpl.dal).GetDeviceOnAppEUIDevEUI(appeui, deveui)
+	if err != nil {
+		return nil, err
+	}
+	if d == nil {
+		return nil, nil
+	}
+	return &bll.Device{ID: d.ID, Application: d.Application, DevEUI: d.DevEUI, AppKey: d.AppKey}, nil
+}
+
 func (bllimpl *bllImpl) ProcessJoinRequest(appeui string, deveui string, devnonce string) {
 	//	session, err := bllimpl.dal.GetSession(devnonce)
 }

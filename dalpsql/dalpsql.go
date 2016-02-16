@@ -128,3 +128,16 @@ func (dalpsql *dalPsql) GetDeviceOnDevEUI(deveui string) (*dal.Device, error) {
 	}
 	return &returnvalue, nil
 }
+
+func (dalpsql *dalPsql) GetDeviceOnAppEUIDevEUI(appeui string, deveui string) (*dal.Device, error) {
+	var returnvalue dal.Device
+	row := dalpsql.db.QueryRow("SELECT devkey, devapp, deveui, devappkey FROM devices JOIN applications on devapp=appkey WHERE appeui=$1 AND deveui=$2", appeui, deveui)
+	err := row.Scan(&returnvalue.ID, &returnvalue.Application, &returnvalue.DevEUI, &returnvalue.AppKey)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, err
+	}
+	return &returnvalue, nil
+}

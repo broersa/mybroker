@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -130,37 +131,49 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	mhdr, err := lora.NewMHDRFromByte(data[0])
 	checkerror(err)
 	if mhdr.IsJoinRequest() {
-		appkey := []byte{0x15, 0x4f, 0x94, 0x7b, 0x41, 0xd0, 0x2f, 0x33, 0x96, 0xf9, 0xaf, 0x6b, 0x4d, 0xb1, 0x0d, 0x5f}
-		_, err := lora.NewJoinRequestValidated(appkey, data)
+		jr, err := lora.NewJoinRequest(data)
 		if err != nil {
-			if _, ok := err.(*lora.ErrorMICValidationFailed); ok {
-				log.Print(err)
-				w.Write([]byte("{error: \"" + err.Error() + "\"}"))
-			} else {
+			checkerror(err)
+		} else {
+			dev, err := b.GetDeviceOnAppEUIDevEUI(hex.EncodeToString(jr.GetAppEUI()), hex.EncodeToString(jr.GetDevEUI()))
+			if err != nil {
 				checkerror(err)
 			}
-		} else {
-			joinaccept, err := lora.NewJoinAccept(appkey, 0)
-			checkerror(err)
-			ja, err := joinaccept.Marshal(appkey)
-			checkerror(err)
-			responsemessage := &models.ResponseMessage{
-				OriginUDPAddrNetwork: message.OriginUDPAddrNetwork,
-				OriginUDPAddrString:  message.OriginUDPAddrString,
-				Package: semtech.TXPK{
-					Tmst: message.Package.Tmst + 5000000,
-					Freq: message.Package.Freq,
-					RFCh: message.Package.RFCh,
-					Powe: 14,
-					Modu: message.Package.Modu,
-					DatR: message.Package.DatR,
-					CodR: message.Package.CodR,
-					IPol: true,
-					Size: uint16(len(ja) - 4),
-					Data: base64.StdEncoding.EncodeToString(ja)}}
-			msg, err := json.Marshal(responsemessage)
-			checkerror(err)
-			w.Write(msg)
+			appkey, err := hex.DecodeString(dev.AppKey)
+			if err != nil {
+				checkerror(err)
+			}
+			_, err = lora.NewJoinRequestValidated(appkey, data)
+			if err != nil {
+				if _, ok := err.(*lora.ErrorMICValidationFailed); ok {
+					log.Print(err)
+					w.Write([]byte("{error: \"" + err.Error() + "\"}"))
+				} else {
+					checkerror(err)
+				}
+			} else {
+				joinaccept, err := lora.NewJoinAccept(appkey, 0)
+				checkerror(err)
+				ja, err := joinaccept.Marshal(appkey)
+				checkerror(err)
+				responsemessage := &models.ResponseMessage{
+					OriginUDPAddrNetwork: message.OriginUDPAddrNetwork,
+					OriginUDPAddrString:  message.OriginUDPAddrString,
+					Package: semtech.TXPK{
+						Tmst: message.Package.Tmst + 5000000,
+						Freq: message.Package.Freq,
+						RFCh: message.Package.RFCh,
+						Powe: 14,
+						Modu: message.Package.Modu,
+						DatR: message.Package.DatR,
+						CodR: message.Package.CodR,
+						IPol: true,
+						Size: uint16(len(ja) - 4),
+						Data: base64.StdEncoding.EncodeToString(ja)}}
+				msg, err := json.Marshal(responsemessage)
+				checkerror(err)
+				w.Write(msg)
+			}
 		}
 	}
 }

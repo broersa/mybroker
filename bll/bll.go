@@ -8,6 +8,7 @@ type (
 		GetApplicationOnAppEUI(appeui string) (*Application, error)
 		RegisterDevice(appeui string, deveui string) (int64, error)
 		GetDevice(id int64) (*Device, error)
+		GetDeviceOnAppEUIDevEUI(appeui string, deveui string) (*Device, error)
 		ProcessJoinRequest(appeui string, deveui string, devnonce string)
 	}
 )
