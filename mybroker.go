@@ -153,29 +153,34 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 					checkerror(err)
 				}
 			} else {
-				nwkaddr, err := b.ProcessJoinRequest()
-
-				joinaccept, err := lora.NewJoinAccept(appkey, 0, nwkaddr)
-				checkerror(err)
-				ja, err := joinaccept.Marshal(appkey)
-				checkerror(err)
-				responsemessage := &models.ResponseMessage{
-					OriginUDPAddrNetwork: message.OriginUDPAddrNetwork,
-					OriginUDPAddrString:  message.OriginUDPAddrString,
-					Package: semtech.TXPK{
-						Tmst: message.Package.Tmst + 5000000,
-						Freq: message.Package.Freq,
-						RFCh: message.Package.RFCh,
-						Powe: 14,
-						Modu: message.Package.Modu,
-						DatR: message.Package.DatR,
-						CodR: message.Package.CodR,
-						IPol: true,
-						Size: uint16(len(ja) - 4),
-						Data: base64.StdEncoding.EncodeToString(ja)}}
-				msg, err := json.Marshal(responsemessage)
-				checkerror(err)
-				w.Write(msg)
+				nwkaddr, appnonce, err := b.ProcessJoinRequest(hex.EncodeToString(jr.GetAppEUI()), hex.EncodeToString(jr.GetDevEUI()), hex.EncodeToString(jr.GetDevNonce()))
+				if err != nil {
+					log.Print(err)
+				} else {
+					if nwkaddr > 0 {
+						joinaccept, err := lora.NewJoinAccept(appkey, 0, nwkaddr, appnonce)
+						checkerror(err)
+						ja, err := joinaccept.Marshal(appkey)
+						checkerror(err)
+						responsemessage := &models.ResponseMessage{
+							OriginUDPAddrNetwork: message.OriginUDPAddrNetwork,
+							OriginUDPAddrString:  message.OriginUDPAddrString,
+							Package: semtech.TXPK{
+								Tmst: message.Package.Tmst + 5000000,
+								Freq: message.Package.Freq,
+								RFCh: message.Package.RFCh,
+								Powe: 14,
+								Modu: message.Package.Modu,
+								DatR: message.Package.DatR,
+								CodR: message.Package.CodR,
+								IPol: true,
+								Size: uint16(len(ja) - 4),
+								Data: base64.StdEncoding.EncodeToString(ja)}}
+						msg, err := json.Marshal(responsemessage)
+						checkerror(err)
+						w.Write(msg)
+					}
+				}
 			}
 		}
 	}

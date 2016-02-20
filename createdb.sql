@@ -13,8 +13,17 @@ create table devices (
 
 create table nwkaddrs (
   nwkkey bigserial primary key,
-  nwkaddr bigint check (value >= 0 and value < '16777216'::bigint) not null,
+  nwkaddr bigint check (nwkaddr >= 0 and nwkaddr < '16777216'::bigint) not null
 );
+
+DO
+$do$
+BEGIN
+FOR i IN 0..10000 LOOP
+    insert into nwkaddrs (nwkaddr) values (i);
+END LOOP;
+END
+$do$;
 
 create table sessions (
   seskey bigserial primary key,
@@ -26,4 +35,3 @@ create table sessions (
   sesappskey varchar(32) not null,
   sesactive timestamp with time zone not null
 );
-

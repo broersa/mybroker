@@ -9,6 +9,6 @@ type (
 		RegisterDevice(appeui string, deveui string) (int64, error)
 		GetDevice(id int64) (*Device, error)
 		GetDeviceOnAppEUIDevEUI(appeui string, deveui string) (*Device, error)
-		ProcessJoinRequest(appeui string, deveui string, devnonce string)
+		ProcessJoinRequest(appeui string, deveui string, devnonce string) (uint32, []byte, error)
 	}
 )

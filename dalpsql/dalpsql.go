@@ -147,7 +147,7 @@ func (dalpsql *dalPsql) GetDeviceOnAppEUIDevEUI(appeui string, deveui string) (*
 
 func (dalpsql *dalPsql) GetSessionOnID(id int64) (*dal.Session, error) {
 	var returnvalue dal.Session
-	row := dalpsql.db.QueryRow("SELECT seskey, sesdev, sesdevnonce, sesappnonce, sesnwkaddr, sesnwkskey, sesappskey, sesactive FROM sessions WHERE seskey=$1", seskey)
+	row := dalpsql.db.QueryRow("SELECT seskey, sesdev, sesdevnonce, sesappnonce, sesnwkaddr, sesnwkskey, sesappskey, sesactive FROM sessions WHERE seskey=$1", id)
 	err := row.Scan(&returnvalue.ID, &returnvalue.Device, &returnvalue.DevNonce, &returnvalue.AppNonce, &returnvalue.NwkAddr, &returnvalue.NwkSKey, &returnvalue.AppSKey, &returnvalue.Active)
 	switch {
 	case err == sql.ErrNoRows:
@@ -160,7 +160,7 @@ func (dalpsql *dalPsql) GetSessionOnID(id int64) (*dal.Session, error) {
 
 func (dalpsql *dalPsql) GetSessionOnDeviceActive(device int64) (*dal.Session, error) {
 	var returnvalue dal.Session
-	row := dalpsql.db.QueryRow("SELECT seskey, sesdev, sesdevnonce, sesappnonce, sesnwkaddr, sesnwkskey, sesappskey, sesactive FROM sessions WHERE sesdev=$1 and sesactive=true", device)
+	row := dalpsql.db.QueryRow("SELECT seskey, sesdev, sesdevnonce, sesappnonce, sesnwkaddr, sesnwkskey, sesappskey, sesactive FROM sessions WHERE sesdev=$1 and sesactive > now()", device)
 	err := row.Scan(&returnvalue.ID, &returnvalue.Device, &returnvalue.DevNonce, &returnvalue.AppNonce, &returnvalue.NwkAddr, &returnvalue.NwkSKey, &returnvalue.AppSKey, &returnvalue.Active)
 	switch {
 	case err == sql.ErrNoRows:
@@ -171,9 +171,9 @@ func (dalpsql *dalPsql) GetSessionOnDeviceActive(device int64) (*dal.Session, er
 	return &returnvalue, nil
 }
 
-func (dalpsql *dalPsql) GetSessionOnDeviceDevNonce(device int64, devnonce string) (*dal.Session, error) {
+func (dalpsql *dalPsql) GetSessionOnDeviceDevNonceActive(device int64, devnonce string) (*dal.Session, error) {
 	var returnvalue dal.Session
-	row := dalpsql.db.QueryRow("SELECT seskey, sesdev, sesdevnonce, sesappnonce, sesnwkaddr, sesnwkskey, sesappskey, sesactive FROM sessions WHERE sesdev=$1 and sesdevnonce=$2", device, devnonce)
+	row := dalpsql.db.QueryRow("SELECT seskey, sesdev, sesdevnonce, sesappnonce, sesnwkaddr, sesnwkskey, sesappskey, sesactive FROM sessions WHERE sesdev=$1 and sesdevnonce=$2 and sesactive > now()", device, devnonce)
 	err := row.Scan(&returnvalue.ID, &returnvalue.Device, &returnvalue.DevNonce, &returnvalue.AppNonce, &returnvalue.NwkAddr, &returnvalue.NwkSKey, &returnvalue.AppSKey, &returnvalue.Active)
 	switch {
 	case err == sql.ErrNoRows:
@@ -182,26 +182,6 @@ func (dalpsql *dalPsql) GetSessionOnDeviceDevNonce(device int64, devnonce string
 		return nil, err
 	}
 	return &returnvalue, nil
-}
-
-func (dalpsql *dalPsql) GetSessionsNwkAddrActive() ([]uint32, error) {
-	var returnvalue []uint32
-	rows, err := dalpsql.db.Query("SELECT sesnwkaddr FROM sessions WHERE sesactive>now()")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		a := 0
-		if err := rows.Scan(&a); err != nil {
-			return nil, err
-		}
-		returnvalue = append(returnvalue, a)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return returnvalue, nil
 }
 
 func (dalpsql *dalPsql) AddSession(session *dal.Session) (int64, error) {
@@ -217,9 +197,9 @@ func (dalpsql *dalPsql) AddSession(session *dal.Session) (int64, error) {
 	return r, nil
 }
 
-func (dalpsql *dalPsql) GetFreeNwkAddr() (nwkaddr *dal.NwkAddr, error) {
+func (dalpsql *dalPsql) GetFreeNwkAddr() (*dal.NwkAddr, error) {
 	var returnvalue dal.NwkAddr
-	row := dalpsql.db.QueryRow("select top 1 nwkkey, nwkaddr from nwkaddr left outer join sesions on sesnwk=nwkkey where sesactive is null or sesactive <= now()")
+	row := dalpsql.db.QueryRow("select nwkkey, nwkaddr from nwkaddrs left outer join sessions on sesnwk=nwkkey where sesactive is null or sesactive <= now() limit 1")
 	err := row.Scan(&returnvalue.ID, &returnvalue.NwkAddr)
 	switch {
 	case err == sql.ErrNoRows:
@@ -228,4 +208,12 @@ func (dalpsql *dalPsql) GetFreeNwkAddr() (nwkaddr *dal.NwkAddr, error) {
 		return nil, err
 	}
 	return &returnvalue, nil
+}
+
+func (dalpsql *dalPsql) SetActiveSessionsInactive(device int64) error {
+	_, err := dalpsql.db.Exec("update sessions set sesactive = now() where sesdev=$1 and sesactive > now()")
+	if err != nil {
+		return err
+	}
+	return nil
 }
