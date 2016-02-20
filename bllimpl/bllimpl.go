@@ -11,13 +11,21 @@ import (
 
 type (
 	bllImpl struct {
-		dal *dal.Dal
+		dal      *dal.Dal
+		nwkaddrs [16777216]bool
 	}
 )
 
 // New Implemented Factory
-func New(dal *dal.Dal) bll.Bll {
-	return &bllImpl{dal}
+func New(dal *dal.Dal) (bll.Bll, error) {
+	a, err := *dal.GetSessionsNwkAddrActive()
+	if err != nil {
+		return nil, err
+	}
+	for i := range a {
+		nwkaddrs[a[i]] = true
+	}
+	return &bllImpl{dal}, nil
 }
 
 func (bllimpl *bllImpl) RegisterApplication(appname string) (int64, error) {
@@ -127,5 +135,6 @@ func (bllimpl *bllImpl) GetDeviceOnAppEUIDevEUI(appeui string, deveui string) (*
 }
 
 func (bllimpl *bllImpl) ProcessJoinRequest(appeui string, deveui string, devnonce string) {
+	b
 	//	session, err := bllimpl.dal.GetSession(devnonce)
 }

@@ -11,9 +11,19 @@ create table devices (
   devappkey varchar(32) unique not null
 );
 
+create table nwkaddrs (
+  nwkkey bigserial primary key,
+  nwkaddr bigint check (value >= 0 and value < '16777216'::bigint) not null,
+);
+
 create table sessions (
   seskey bigserial primary key,
   sesdev bigint references devices (devkey),
+  sesnwk bigint references nwkaddrs (nwkkey),
   sesdevnonce varchar(4) not null,
-  sesappnonce varchar(6) not null
+  sesappnonce varchar(6) not null,
+  sesnwkskey varchar(32) not null,
+  sesappskey varchar(32) not null,
+  sesactive timestamp with time zone not null
 );
+

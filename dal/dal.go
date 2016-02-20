@@ -1,5 +1,7 @@
 package dal
 
+import "github.com/broersa/mybroker/dal"
+
 type (
 	// Dal Interface for Business Layer
 	Dal interface {
@@ -14,7 +16,10 @@ type (
 		GetDevice(id int64) (*Device, error)
 		GetDeviceOnDevEUI(deveui string) (*Device, error)
 		GetDeviceOnAppEUIDevEUI(appeui string, deveui string) (*Device, error)
-		//		GetSessionOnID(id int64) (*Session, error)
-		//		GetSessionOnDevNonce(devnonce string) (*Session, error)
+		AddSession(session *dal.Session) (int64, error)
+		GetSessionOnID(id int64) (*Session, error)
+		GetSessionOnDeviceActive(device int64) (*Session, error)
+		GetActiveSessionOnDevEUIDevNonce(deveui string, devnonce string) (*Session, error)
+		GetFreeNwkAddr() (uint32, error)
 	}
 )

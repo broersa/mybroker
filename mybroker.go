@@ -110,6 +110,7 @@ func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 func HasApplication(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	appeui := vars["appeui"]
+	fmt.Println(appeui)
 	application, err := b.GetApplicationOnAppEUI(appeui)
 	if err == nil {
 		if application != nil {
@@ -152,7 +153,9 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 					checkerror(err)
 				}
 			} else {
-				joinaccept, err := lora.NewJoinAccept(appkey, 0)
+				nwkaddr, err := b.ProcessJoinRequest()
+
+				joinaccept, err := lora.NewJoinAccept(appkey, 0, nwkaddr)
 				checkerror(err)
 				ja, err := joinaccept.Marshal(appkey)
 				checkerror(err)
